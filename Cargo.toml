@@ -1,7 +1,7 @@
 [package]
 name = "stable-swap-rs"
 version = "0.1.0"
-edition = "2025"
+edition = "2021"
 authors = ["RongZe Gao <2950243695@qq.com>"]
 description = "Rust library implementing Curve's StableSwap algorithm for a USDC/USDT trading pair."
 license = "Apache-2.0"
