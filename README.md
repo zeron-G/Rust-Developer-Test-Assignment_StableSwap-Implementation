@@ -12,7 +12,7 @@ $$
 S = \sum_{i=0}^{n-1} x_i, \qquad P = \prod_{i=0}^{n-1} x_i .
 $$
 
-Let $A>0$ denote the amplification coefficient and $\operatorname{Ann} = A\,n^n$ (for two coins, $\operatorname{Ann}=4A$). All quantities are represented as integers with 6 fraction digits (e.g., `1 USDC = 1_000_000`). Internal arithmetic is performed in $\mathtt{u128}$.
+Let $A>0$ denote the amplification coefficient and $Ann = A\,n^n$ (for two coins, $Ann=4A$). All quantities are represented as integers with 6 fraction digits (e.g., `1 USDC = 1_000_000`). Internal arithmetic is performed in $\mathtt{u128}$.
 
 **Objective.** Given an input trade of size $\Delta x$ on coin $i$, we seek the output $\Delta y$ on coin $j\ne i$ such that the trade preserves the StableSwap invariant (up to conservative rounding) and applies a basis-points fee on the input.
 
@@ -23,21 +23,21 @@ Let $A>0$ denote the amplification coefficient and $\operatorname{Ann} = A\,n^n$
 The invariant in the two-asset case is written as
 
 $$
-\operatorname{Ann}\,S + D \;=\; \operatorname{Ann}\,D + \frac{D^{n+1}}{n^n\,P}\qquad (n=2),
+Ann\,S + D \;=\; Ann\,D + \frac{D^{n+1}}{n^n\,P}\qquad (n=2),
 $$
 
 where $D$ is the positive solution balancing the curve. Define
 
 $$
-F(D) \equiv \operatorname{Ann}\,S + D - \operatorname{Ann}\,D - \frac{D^{n+1}}{n^n\,P} = 0 .
+F(D) \equiv Ann\,S + D - Ann\,D - \frac{D^{n+1}}{n^n\,P} = 0 .
 $$
 
 We compute $D$ by Newton’s method. Let
 
 $$
 D_P(D) \equiv \frac{D^{n+1}}{n^n\,P}, \qquad 
-F'(D) = 1 - \operatorname{Ann} - \frac{(n+1)D^n}{n^n\,P}
-     = 1 - \operatorname{Ann} - \frac{(n+1)D_P}{D}.
+F'(D) = 1 - Ann - \frac{(n+1)D^n}{n^n\,P}
+     = 1 - Ann - \frac{(n+1)D_P}{D}.
 $$
 
 Then
@@ -45,14 +45,14 @@ Then
 $$
 D_{\text{new}} 
 = D - \frac{F(D)}{F'(D)}
-= D - \frac{\operatorname{Ann}S + D - \operatorname{Ann}D - D_P}{1 - \operatorname{Ann} - (n+1)D_P/D}.
+= D - \frac{AnnS + D - AnnD - D_P}{1 - Ann - (n+1)D_P/D}.
 $$
 
 Multiplying numerator/denominator by $D$ yields the closed-form update used in code:
 
 $$
-\boxed{\; D_{\text{new}} = \frac{\big(\operatorname{Ann}S + nD_P\big)\,D}
-{(\operatorname{Ann}-1)D + (n+1)D_P} \;}
+\boxed{\; D_{\text{new}} = \frac{\big(AnnS + nD_P\big)\,D}
+{(Ann-1)D + (n+1)D_P} \;}
 $$
 
 with $n=2$. Iterate until $|D_{k+1}-D_k|\le 1$ (or a hard cap). In practice, convergence occurs in <10 steps.
@@ -74,7 +74,7 @@ All products/divisions use checked integer arithmetic (`mul_div`).
 After charging the input fee (see §4), set $x_i \leftarrow x_i + \Delta x_{\text{net}}$. Solve for the new output-side balance $y\equiv x'_j$ **holding $D$ fixed**. Let
 
 $$
-S' = \sum_{k\ne j} x_k,\qquad \operatorname{Ann} = A\,n^n .
+S' = \sum_{k\ne j} x_k,\qquad Ann = A\,n^n .
 $$
 
 With $D$ fixed, the invariant reduces to a scalar nonlinear equation in $y$. A standard rearrangement yields
@@ -86,8 +86,8 @@ $$
 where
 
 $$
-b = S' + \frac{D}{\operatorname{Ann}}, \qquad
-c = \frac{D^{n+1}}{n^n\,\prod_{k\ne j} x_k}\cdot \frac{1}{\operatorname{Ann}} .
+b = S' + \frac{D}{Ann}, \qquad
+c = \frac{D^{n+1}}{n^n\,\prod_{k\ne j} x_k}\cdot \frac{1}{Ann} .
 $$
 
 Applying Newton’s method to $f(y)$ gives the practical update:
