@@ -113,6 +113,7 @@ Let `fee_bps` be the input-side fee in basis points (1% = 100 bps). We charge th
 $$
 \Delta x_{\text{net}} = \Delta x\cdot \frac{\text{BPS}_\text{denom} - \text{fee\_bps}}{\text{BPS}_\text{denom}},
 $$
+
 $$
 \qquad \text{BPS}_\text{denom}=10{,}000.
 $$
