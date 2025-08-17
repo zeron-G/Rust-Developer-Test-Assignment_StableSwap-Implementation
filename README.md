@@ -118,7 +118,7 @@ $$
 The execution price is $p=\Delta x/\Delta y$. To measure **curve-only** slippage, set fee to zero temporarily and compute
 
 $$
-\text{slippage\_bps} \approx 10^4\,(p-1),
+\text{slippagebps} \approx 10^4\,(p-1),
 $$
 
 relative to the ideal 1:1 price.
