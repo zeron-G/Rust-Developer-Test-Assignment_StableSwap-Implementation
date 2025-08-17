@@ -111,7 +111,7 @@ where the extra `-1` is a conservative guard against invariant drift due to inte
 Let `fee_bps` be the input-side fee in basis points (1% = 100 bps). We charge the fee on the input:
 
 $$
-\Delta x_{\text{net}}
+\Delta x_{\text{net}}=\Delta x\cdot
 $$
 
 $$
