@@ -95,7 +95,7 @@ impl StableSwapPool {
         // effective price = dx/dy; slippage = (price-1)*1e4 bps
         let price_num = amount as u128;
         let price_den = dy as u128;
-        let one = 1u128;
+        // let one = 1u128;
         // price - 1 = (num/den) - 1 = (num - den)/den
         let diff_num = price_num.saturating_sub(price_den);
         let slippage_bps = mul_div(diff_num * 10_000u128, 1, price_den).unwrap_or(0);
