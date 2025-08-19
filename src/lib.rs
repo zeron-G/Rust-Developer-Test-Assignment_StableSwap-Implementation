@@ -60,7 +60,7 @@ impl StableSwapPool {
     /// Calculate output amount `dy` for swapping `dx` of token i into token j
     /// Fees are charged on the input (dx net-of-fee enters the pool)
     pub fn get_dy(&self, i: usize, j: usize, dx: u64) -> Result<u64, SwapError> {
-        if i == j || i >= N_COINS || j >= N_COINS { return Err(SwapError::BadIndex); }
+        if i == j || i >= N_COINS || j >= N_COINS { return Err(SwapError::BadIndex ); }
         if dx == 0 { return Err(SwapError::ZeroTrade); }
         if self.reserves[i] == 0 || self.reserves[j] == 0 { return Err(SwapError::NoLiquidity); }
 
@@ -174,14 +174,15 @@ fn mul_div(a: u128, b: u128, den: u128) -> Option<u128> {
 /// Constant-product (x*y=k) helper: output dy for dx of token i into j (no fees)
 pub fn constant_product_dy(reserves: [u64;2], i: usize, j: usize, dx: u64) -> Option<u64> {
     if i == j || i >= 2 || j >= 2 || dx == 0 { return None; }
-    let mut x = reserves[i] as u128;
-    let mut y = reserves[j] as u128;
+    let x = reserves[i] as u128;
+    let y = reserves[j] as u128;
     let k = x.checked_mul(y)?;
-    x = x.checked_add(dx as u128)?;
+    let x = x.checked_add(dx as u128)?; // 用新绑定遮蔽旧的 x
     let new_y = k.checked_div(x)?;
     let dy = y.checked_sub(new_y)?.saturating_sub(1);
     Some(dy as u64)
 }
+
 
 #[cfg(test)]
 mod tests {
