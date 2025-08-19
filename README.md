@@ -41,9 +41,9 @@ Add the dependency to your project’s `Cargo.toml` (replace with your real GitH
 ```toml
 [dependencies]
 # Git tag (recommended)
-stable-swap-rs = { git = "https://github.com/<your-username>/stable-swap-rs", tag = "v0.1.0" }
+stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", tag = "v0.1.0" }
 # Or pin to a commit
-# stable-swap-rs = { git = "https://github.com/<your-username>/stable-swap-rs", rev = "<commit-hash>" }
+# stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", rev = "<commit-hash>" }
 ```
 
 > **Note on names**
