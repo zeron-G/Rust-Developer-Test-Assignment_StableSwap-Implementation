@@ -112,6 +112,7 @@ $$
 $$
 
 Right-hand side:
+
 $$
 \lambda\,D^{\,n} + \Big(\frac{D}{n}\Big)^{\!n}=\Big(\frac{A n^{n} P}{D^{\,n}}\Big) D^{\,n} + \frac{D^{\,n}}{n^{n}}=A n^{n} P + \frac{D^{\,n}}{n^{n}}.
 $$
