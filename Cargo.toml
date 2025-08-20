@@ -5,6 +5,8 @@ edition = "2021"
 authors = ["RongZe Gao <2950243695@qq.com>"]
 description = "Rust library implementing Curve's StableSwap algorithm for a USDC/USDT trading pair."
 license = "Apache-2.0"
+repository = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation"
+readme = "README.md"
 
 [lib]
 name = "stable_swap_rs"

@@ -60,28 +60,45 @@ impl StableSwapPool {
     /// Calculate output amount `dy` for swapping `dx` of token i into token j
     /// Fees are charged on the input (dx net-of-fee enters the pool)
     pub fn get_dy(&self, i: usize, j: usize, dx: u64) -> Result<u64, SwapError> {
-        if i == j || i >= N_COINS || j >= N_COINS { return Err(SwapError::BadIndex ); }
+        if i == j || i >= N_COINS || j >= N_COINS { return Err(SwapError::BadIndex); }
         if dx == 0 { return Err(SwapError::ZeroTrade); }
         if self.reserves[i] == 0 || self.reserves[j] == 0 { return Err(SwapError::NoLiquidity); }
+        if (self.fee_bps as u128) > BPS_DENOM { return Err(SwapError::Math); }
 
-        let mut xp = [self.reserves[0] as u128, self.reserves[1] as u128];
         let amp = self.ann();
-        let d = compute_d(&xp, amp);
-        if d == 0 { return Err(SwapError::NoLiquidity); }
 
-        // apply fee on input
         let dx_u = dx as u128;
         let fee = self.fee_bps as u128;
-        let dx_less_fee = mul_div(dx_u, BPS_DENOM - fee, BPS_DENOM).ok_or(SwapError::Math)?;
-        xp[i] = xp[i].checked_add(dx_less_fee).ok_or(SwapError::Math)?;
+        let dx_net = mul_div(dx_u, BPS_DENOM - fee, BPS_DENOM).ok_or(SwapError::Math)?;
+
+        if amp == 0 {
+            let x_pre = self.reserves[i] as u128;
+            let y_pre = self.reserves[j] as u128;
+            let k = x_pre.checked_mul(y_pre).ok_or(SwapError::Math)?;
+            let x_post = x_pre.checked_add(dx_net).ok_or(SwapError::Math)?;
+            let new_y = k.checked_div(x_post).ok_or(SwapError::Math)?;
+            let dy = y_pre.checked_sub(new_y)
+                .and_then(|v| v.checked_sub(1)) 
+                .ok_or(SwapError::Math)?;
+            return Ok(dy as u64);
+        }
+
+
+        let x_pre = [self.reserves[0] as u128, self.reserves[1] as u128];
+        let d = compute_d(&x_pre, amp);
+        if d == 0 { return Err(SwapError::NoLiquidity); }
+
+        let mut xp = x_pre;
+        xp[i] = xp[i].checked_add(dx_net).ok_or(SwapError::Math)?;
 
         let y = get_y(i, j, &xp, d, amp)?;
         let dy = (self.reserves[j] as u128)
             .checked_sub(y)
-            .and_then(|v| v.checked_sub(1)) // round down like Curve to avoid over-withdraw
+            .and_then(|v| v.checked_sub(1))  
             .ok_or(SwapError::Math)?;
         Ok(dy as u64)
     }
+
 
     /// Calculate slippage (bps) for swapping `amount` of token 0 -> token 1 using StableSwap
     /// Relative to ideal price 1.0 (USDC/USDT), ignoring fees to isolate curve effect.
@@ -219,5 +236,32 @@ mod tests {
         let pool = StableSwapPool { reserves: [5_000_000_000, 5_000_000_000], amplification_coefficient: 100, fee_bps: 0 };
         let s = pool.calculate_slippage_bps(500_000_000); // trade 500
         assert!(s < 1000); // < 1% for balanced pool with A=100
+    }
+
+    #[test]
+    fn error_on_bad_index_and_zero_trade() {
+        let pool = StableSwapPool { reserves: [1_000_000, 1_000_000], amplification_coefficient: 100, fee_bps: 0 };
+        assert!(matches!(pool.get_dy(0, 0, 1), Err(SwapError::BadIndex))); // i == j
+        assert!(matches!(pool.get_dy(0, 1, 0), Err(SwapError::ZeroTrade))); // dx == 0
+    }
+
+    #[test]
+    fn error_on_no_liquidity() {
+        let pool = StableSwapPool { reserves: [0, 1_000_000], amplification_coefficient: 100, fee_bps: 0 };
+        assert!(matches!(pool.get_dy(0, 1, 1_000), Err(SwapError::NoLiquidity)));
+    }
+
+    #[test]
+    fn works_in_constant_product_limit_a_zero() {
+        let pool = StableSwapPool { reserves: [1_000_000_000, 1_000_000_000], amplification_coefficient: 0, fee_bps: 0 };
+        let dy = pool.get_dy(0, 1, 100_000_000).unwrap();
+        assert!(dy > 0); // still quotes in the A→0 limit
+    }
+
+    #[test]
+    fn extreme_imbalance_still_converges() {
+        let pool = StableSwapPool { reserves: [10_000_000_000, 10_000], amplification_coefficient: 200, fee_bps: 0 };
+        let dy = pool.get_dy(0, 1, 1_000_000).unwrap(); // small trade into the thin side
+        assert!(dy > 0);
     }
 }
