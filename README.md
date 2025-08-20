@@ -705,7 +705,7 @@ pub fn get_dy(&self, i: usize, j: usize, dx: u64) -> Result<u64, SwapError> {
     xp[i] = xp[i].checked_add(dx_less_fee).ok_or(SwapError::Math)?;
 ```
 
-* Implements $\Delta x_{\text{net}} = \Delta x\cdot\frac{10\,000 - \text{fee\_bps}}{10\,000}$.
+* Implements $\Delta x_{\text{net}} = \Delta x\cdot\frac{10\,000 - \text{feebps}}{10\,000}$.
 * Only **net** input enters the mathematical state (consistent with “fee-on-input” convention).
 
 **Solve for the post-trade balance $y$ at fixed $D$ (Eq. 2.5.1/2.5.2):**
@@ -844,7 +844,7 @@ pub fn calculate_slippage_bps(&self, amount: u64) -> u16 {
 ```
 
 * Computes effective execution price $p=\Delta x/\Delta y$ with **fees disabled**.
-* Returns $\text{slippage\_bps} \approx 10^{4}\,(p-1)$, the deviation from the ideal 1:1 peg (see §2.6 on near-parity constant-sum behavior).
+* Returns $\text{slippagebps} \approx 10^{4}\,(p-1)$, the deviation from the ideal 1:1 peg (see §2.6 on near-parity constant-sum behavior).
 
 ---
 
