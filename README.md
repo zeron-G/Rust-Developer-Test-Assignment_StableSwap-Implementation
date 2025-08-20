@@ -105,24 +105,24 @@ $$
 
 **Derivation of the invariant.** Substitute (2.2.3) into (2.2.2) and simplify carefully.
 
-* Left-hand side:
+Left-hand side:
 
-  $$
+$$
   \lambda\,D^{\,n-1}S + P
   \;=\;
   \Big(\frac{A n^{n} P}{D^{\,n}}\Big) D^{\,n-1} S + P
   \;=\;
   \frac{A n^{n} P}{D}\,S + P.
-  $$
-* Right-hand side:
+$$
 
-  $$
+Right-hand side:
+$$
   \lambda\,D^{\,n} + \Big(\frac{D}{n}\Big)^{\!n}
   \;=\;
   \Big(\frac{A n^{n} P}{D^{\,n}}\Big) D^{\,n} + \frac{D^{\,n}}{n^{n}}
   \;=\;
   A n^{n} P + \frac{D^{\,n}}{n^{n}}.
-  $$
+$$
 
 Equate LHS and RHS and multiply by $D>0$:
 
