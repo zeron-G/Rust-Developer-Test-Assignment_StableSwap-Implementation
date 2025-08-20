@@ -528,7 +528,367 @@ cargo test -q
 The tests cover: monotonicity of `D`, fee-on-input behavior, and lower slippage vs. x\*y=k in balanced pools.
 
 
+Below is **Section 4 — function–by–function analysis** in English, written as a stand-alone reference that maps each piece of code to the mathematics from **Section 2** (general $n$ with specialization to $n=2$). I use the equation labels from Section 2:
 
+* **(2.2.4)** — StableSwap invariant (general $n$)
+  $\mathrm{Ann}\,S + D = \mathrm{Ann}\,D + \dfrac{D^{\,n+1}}{n^{n}P}$
+* **(2.4.1)** — Newton update for $D$ (general $n$)
+  $D \leftarrow \dfrac{\big(\mathrm{Ann}\,S + n\,D_P\big)\,D}{(\mathrm{Ann}-1)\,D + (n+1)\,D_P}$, with $D_P=\dfrac{D^{\,n+1}}{n^{n}P}$
+* **(2.5.1)** — Quadratic for $y$ at fixed $D$ (general $n$)
+  $y^2 + (b - D)\,y - c = 0$, where $b = S' + \dfrac{D}{\mathrm{Ann}}$, $c = \dfrac{D^{\,n+1}}{n^{n}\,\mathrm{Ann}\,\prod_{k\ne j}x_k}$
+* **(2.5.2)** — Newton update for $y$ (closed form)
+  $y \leftarrow \dfrac{y^2 + c}{\,2y + b - D\,}$
+
+Throughout the code, $n=2$ (USDC/USDT), so $n^n=4$ and $\mathrm{Ann}=A\cdot 4$.
+
+---
+
+# 4. Code Analysis
+
+## 4.1 Constants, error types, and units
+
+```rust
+const BPS_DENOM: u128 = 10_000;
+const N_COINS: usize = 2;
+const MAX_ITERS: usize = 256;
+```
+
+* `BPS_DENOM` fixes basis-points arithmetic (fees on input).
+* `N_COINS = 2` specializes the general-$n$ model to the implementation case.
+* `MAX_ITERS` is a hard cap for Newton iterations; convergence is typically < 10 iterations due to concavity/convexity proofs in §2.4 and §2.5.
+
+```rust
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SwapError { BadIndex, ZeroTrade, NoLiquidity, NoConvergence, Math }
+```
+
+* Encodes well-typed failure modes tied to the math:
+
+  * `BadIndex`: violates $i\neq j$ or out of range (precondition of the two-asset formulation).
+  * `ZeroTrade`: trivial query $\Delta x=0$.
+  * `NoLiquidity`: some $x_i=0$ ⇒ $P=0$ invalid in (2.2.4).
+  * `NoConvergence`: fails to reach $|\Delta|\le 1$ within `MAX_ITERS` (extremely rare).
+  * `Math`: overflow or divide-by-zero guard in integer arithmetic.
+
+**Units:** All public amounts are 6-decimal fixed-point integers (`u64`). Internals use `u128` to preserve headroom for products like $D^{3}$ in $n=2$.
+
+---
+
+## 4.2 `StableSwapPool` — state and parameters
+
+```rust
+pub struct StableSwapPool {
+    pub reserves: [u64; N_COINS],
+    pub amplification_coefficient: u64, // A
+    pub fee_bps: u16,                   // input-side fee
+}
+```
+
+* `reserves` implement $(x_0,x_1)$ (Section 2: $x_i>0$).
+* `amplification_coefficient` is $A$ (Section 2).
+* `fee_bps` is applied **on input** (kept out of the core invariant, which is fee-free by design).
+
+Constructor:
+
+```rust
+pub fn new(reserves: [u64; N_COINS], amp: u64) -> Self
+```
+
+* Initializes the state; leaves `fee_bps=0` so you can quote fee-free and then toggle fees explicitly.
+
+---
+
+## 4.3 `ann()` — $\mathrm{Ann}=A\,n^n$ (specialized to $n=2$)
+
+```rust
+fn ann(&self) -> u128 { (self.amplification_coefficient as u128) * 4u128 }
+```
+
+* Implements $\mathrm{Ann}=A\cdot n^{n}$ from (2.2.4). With $n=2$, $n^n=4$.
+
+---
+
+## 4.4 `get_d()` — compute the invariant $D$
+
+```rust
+pub fn get_d(&self) -> u64 {
+    let amp = self.ann();                // Ann
+    let x = [self.reserves[0] as u128, self.reserves[1] as u128];
+    let d = compute_d(&x, amp);
+    d as u64
+}
+```
+
+* Thin wrapper that calls the Newton solver `compute_d` to return the unique root of (2.2.4).
+* The mapping is direct: input $x=(x_0,x_1)$ and $\mathrm{Ann}$ → solve for $D$.
+
+---
+
+## 4.5 `compute_d()` — Newton’s method for $D$ (Eq. 2.4.1)
+
+```rust
+fn compute_d(x: &[u128; N_COINS], ann: u128) -> u128 {
+    let s = x[0] + x[1];    // S = sum x_i
+    if s == 0 { return 0; }
+    let mut d = s;          // initial guess D0 = S  (cf. §2.4 convergence lemma)
+```
+
+* `d = s` is the recommended initial guess. In §2.3.2, $D\le S$ and $D=S$ iff balanced; with $F''<0$ (§2.4), Newton from $S$ is monotone decreasing and convergent.
+
+**Safe construction of $D_P = \dfrac{D^{n+1}}{n^n \prod x_i}$ (here $n=2$)**
+
+```rust
+    for _ in 0..MAX_ITERS {
+        let mut d_p = d; // start with D
+        for k in 0..N_COINS {
+            let denom = x[k].saturating_mul(N_COINS as u128);
+            if denom == 0 { return 0; }
+            d_p = match mul_div(d_p, d, denom) { Some(v) => v, None => return 0 };
+        }
+```
+
+* Loop proves: after the first pass, $d_p = \dfrac{D^2}{x_0 n}$; after second,
+  $d_p = \dfrac{D^3}{x_0 x_1 n^2} = \dfrac{D^{n+1}}{n^n \prod x_i}$.
+  This is exactly the $D_P$ used in (2.4.1).
+* `mul_div` performs **checked** multiply then divide to avoid overflow and division by zero.
+
+**Closed-form Newton step (Eq. 2.4.1):**
+
+```rust
+        let prev = d;
+        let num = (ann.saturating_mul(s) + d_p.saturating_mul(N_COINS as u128))
+            .saturating_mul(d);
+        let den = (ann.saturating_sub(1)).saturating_mul(d)
+            + (N_COINS as u128 + 1) * d_p;
+        d = num.checked_div(den).unwrap_or(0);
+```
+
+* Numerator implements $(\mathrm{Ann}\,S + n\,D_P)\,D$.
+* Denominator implements $(\mathrm{Ann}-1)\,D + (n+1)\,D_P$.
+* This is literally (2.4.1) with $n=2$.
+
+**Stopping rule:**
+
+```rust
+        if d > prev { if d - prev <= 1 { break; }} else { if prev - d <= 1 { break; }}
+```
+
+* Integer-domain convergence: $|\Delta D|\le 1$ (as recommended in §2.4).
+
+**Return `d`** — the unique invariant for current `x`.
+
+---
+
+## 4.6 `get_dy()` — quote output $\Delta y$ for input $\Delta x$
+
+```rust
+pub fn get_dy(&self, i: usize, j: usize, dx: u64) -> Result<u64, SwapError> {
+    // (1) Guard preconditions: i != j, indices in range, nonzero trade, nonzero liquidity
+```
+
+* Mirrors model assumptions: $i\ne j$, $x_i>0$ (so $P>0$), and $\Delta x>0$.
+
+```rust
+    let mut xp = [self.reserves[0] as u128, self.reserves[1] as u128];
+    let amp = self.ann();
+    let d = compute_d(&xp, amp);   // D for the pre-trade state (solves 2.2.4)
+```
+
+* Compute the invariant $D$ for **current** reserves (never cached; §2.3).
+
+**Fee on input (kept out of the invariant):**
+
+```rust
+    let dx_u = dx as u128;
+    let fee = self.fee_bps as u128;
+    let dx_less_fee = mul_div(dx_u, BPS_DENOM - fee, BPS_DENOM).ok_or(SwapError::Math)?;
+    xp[i] = xp[i].checked_add(dx_less_fee).ok_or(SwapError::Math)?;
+```
+
+* Implements $\Delta x_{\text{net}} = \Delta x\cdot\frac{10\,000 - \text{fee\_bps}}{10\,000}$.
+* Only **net** input enters the mathematical state (consistent with “fee-on-input” convention).
+
+**Solve for the post-trade balance $y$ at fixed $D$ (Eq. 2.5.1/2.5.2):**
+
+```rust
+    let y = get_y(i, j, &xp, d, amp)?;
+```
+
+* Calls the Newton solver for $y$ using the quadratic from (2.5.1) with the closed-form update (2.5.2).
+
+**Conservative rounding of output (protect invariant):**
+
+```rust
+    let dy = (self.reserves[j] as u128)
+        .checked_sub(y)
+        .and_then(|v| v.checked_sub(1)) // round down like Curve
+        .ok_or(SwapError::Math)?;
+    Ok(dy as u64)
+}
+```
+
+* Returns $\Delta y = x_j - y - 1$ per §2.5: “round down and minus one” avoids over-withdrawal under integer truncation.
+
+> **Note**: `get_dy` **does not mutate** `self.reserves`. It is a pure quote. Execution, if desired, must be done by the caller (add $\Delta x_{\text{net}}$ to side $i$ and subtract returned $\Delta y$ from side $j$).
+
+---
+
+## 4.7 `get_y()` — Newton’s method for the post-trade balance (Eqs. 2.5.1–2.5.2)
+
+```rust
+fn get_y(i: usize, j: usize, xp: &[u128; N_COINS], d: u128, ann: u128) -> Result<u128, SwapError> {
+    let mut c = d;
+    let mut s: u128 = 0;
+```
+
+* We will assemble $b$ and $c$ to match the quadratic $y^2 + (b-D)y - c = 0$ (2.5.1).
+* In the two-asset case, indices reduce the “exclude $j$” product/sum to just the other coin.
+
+**Build $S'$ and $c$:**
+
+```rust
+    for k in 0..N_COINS {
+        if k == j { continue; }
+        let xk = xp[k];
+        s = s.saturating_add(xk);                         // s := S' = sum_{k≠j} x_k
+        let denom = xk.saturating_mul(N_COINS as u128);   // x_k * n
+        c = mul_div(c, d, denom).ok_or(SwapError::Math)?; // c *= D / (x_k * n)
+    }
+    // c = D^{n+1}/(n^n * prod(x_except_j)) * 1/Ann
+    c = mul_div(c, d, ann.saturating_mul(N_COINS as u128)).ok_or(SwapError::Math)?;
+```
+
+* Start with `c = d` and multiply by $D/(x_k\,n)$ once for each included $x_k$: after the loop,
+  $c = \dfrac{D^{n}}{n^{n-1}\prod_{k\ne j}x_k}$.
+* Then multiply by $D/(n\,\mathrm{Ann})$ to get
+  $c = \dfrac{D^{n+1}}{n^{n}\,\mathrm{Ann}\,\prod_{k\ne j}x_k}$, which is exactly the $c$ in (2.5.1).
+
+**Compute $b=S'+D/\mathrm{Ann}$:**
+
+```rust
+    let b = s + d / ann;
+```
+
+**Newton iteration with the closed-form step (2.5.2):**
+
+```rust
+    let mut y = d;  // initial guess y0 = D (positive, right scale)
+    for _ in 0..MAX_ITERS {
+        let num = y.saturating_mul(y).saturating_add(c);      // y^2 + c
+        let den = y.saturating_mul(2).saturating_add(b).saturating_sub(d); // 2y + b - D
+        if den == 0 { return Err(SwapError::Math); }
+        let y_next = num / den;
+        if y_next == y || (y_next > y && y_next - y <= 1) || (y > y_next && y - y_next <= 1) {
+            y = y_next; break;
+        }
+        y = y_next;
+    }
+```
+
+* Implements exactly $y \leftarrow \dfrac{y^2 + c}{2y + b - D}$ (2.5.2).
+* Denominator $2y+b-D\ge y+b>0$ for $y>0$, so division by zero is structurally ruled out (see §2.5).
+
+Return `Ok(y)`; the caller computes $\Delta y=x_j-y-1$.
+
+---
+
+## 4.8 `mul_div()` — safe integer fraction
+
+```rust
+fn mul_div(a: u128, b: u128, den: u128) -> Option<u128> {
+    if den == 0 { return None; }
+    a.checked_mul(b)?.checked_div(den)
+}
+```
+
+* Encapsulates “multiply then divide” with overflow/zero-denominator checks.
+* Critical to avoid transient overflow when constructing $D_P$ and $c$ (products like $D^{3}$ in $n=2$).
+
+---
+
+## 4.9 `constant_product_dy()` — baseline $x\,y=k$
+
+```rust
+pub fn constant_product_dy(reserves: [u64;2], i: usize, j: usize, dx: u64) -> Option<u64> {
+    ...
+    let k = x.checked_mul(y)?;     // k = x*y
+    x = x.checked_add(dx as u128)?;// x' = x + dx
+    let new_y = k.checked_div(x)?; // y' = k / x'
+    let dy = y.checked_sub(new_y)?.saturating_sub(1);
+    Some(dy as u64)
+}
+```
+
+* Implements the classical constant-product trade without fees:
+
+  * $k=xy$, $x\gets x+\Delta x$, $y'=\dfrac{k}{x+\Delta x}$, output $=\;y-y'-1$.
+* Used in tests and documentation to **contrast slippage** versus StableSwap (§2.6).
+
+---
+
+## 4.10 `calculate_slippage_bps()` — curve-only slippage estimator
+
+```rust
+pub fn calculate_slippage_bps(&self, amount: u64) -> u16 {
+    if self.reserves[0] == 0 || self.reserves[1] == 0 || amount == 0 { return 0; }
+    let mut tmp = self.clone();
+    tmp.fee_bps = 0;                       // isolate curve effect
+    let dy = tmp.get_dy(0, 1, amount).unwrap_or(0);
+    if dy == 0 { return 0; }
+    let price_num = amount as u128;        // p = dx/dy
+    let price_den = dy as u128;
+    let diff_num = price_num.saturating_sub(price_den);
+    let slippage_bps = mul_div(diff_num * 10_000u128, 1, price_den).unwrap_or(0);
+    slippage_bps as u16
+}
+```
+
+* Computes effective execution price $p=\Delta x/\Delta y$ with **fees disabled**.
+* Returns $\text{slippage\_bps} \approx 10^{4}\,(p-1)$, the deviation from the ideal 1:1 peg (see §2.6 on near-parity constant-sum behavior).
+
+---
+
+## 4.11 Tests — mapping to Section 2 properties
+
+```rust
+#[test] fn d_monotonic_in_reserves() { ... }
+```
+
+* Increases both reserves $\Rightarrow$ `get_d()` increases. Matches §2.3.3 (∂D/∂xⱼ>0) and §2.3.2 (D≤S, monotone in $x$).
+
+```rust
+#[test] fn basic_swap_less_slippage_than_xyk() { ... }
+```
+
+* For balanced liquidity and moderate $A$, StableSwap returns a **larger** output than $x\,y=k$. Matches §2.6 (constant-sum-like near parity).
+
+```rust
+#[test] fn fee_is_applied_on_input() { ... }
+```
+
+* With fee>0, `get_dy` decreases vs fee=0 (fee on input). Purely accounting; invariant math is fee-free.
+
+```rust
+#[test] fn slippage_bps_reasonable() { ... }
+```
+
+* In deep, balanced pools with $A\approx 100$, curve-only slippage for moderate trades stays well below 1% (empirical property following from §2.6).
+
+---
+
+## 4.12 Subtle points & extensibility notes
+
+* **No caching of $D$:** Always recompute from current $x$. The invariant depends on the instantaneous state; caching risks stale quotes (see §2.3).
+* **Generality in $n$:** The loops in `compute_d` and `get_y` already mirror the general formulas (2.4.1) and (2.5.1); specialization occurs via `N_COINS`. To lift to $n>2$, parameterize `N_COINS`, compute $n^n$ at runtime for $\mathrm{Ann}=A\,n^n$, and keep the same iteration patterns.
+* **Rounding policy:** Returning $x_j - y - 1$ ensures we never over-withdraw due to integer truncation (§2.5).
+* **Safety of denominators:**
+
+  * In `compute_d`, `den = (Ann−1)D + (n+1)D_P > 0` for $D>0$, $Ann>0$, $D_P>0$.
+  * In `get_y`, `2y + b − D ≥ y + b > 0` for $y>0$.
+* **Convergence guarantees:**
+
+  * $D$: $F'(D)<0$, $F''(D)<0$ ⇒ Newton from $D_0=S$ is monotone $\downarrow$ to the unique root (§2.4).
+  * $y$: Monic quadratic, strictly convex; Newton with update (2.5.2) converges rapidly (§2.5).
 
 
 ---
