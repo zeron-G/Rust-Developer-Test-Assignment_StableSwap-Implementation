@@ -180,7 +180,7 @@ $$
 Compute the partial (holding $D$ fixed):
 
 $$
-\frac{\partial F}{\partial x_j}=\mathrm{Ann} + \frac{D^{ n+1}}{n^{n}P}\cdot\frac{1}{x_j} > 0.
+\frac{\partial F}{\partial x_j}=\mathrm{Ann} + \frac{D^{\,n+1}}{n^{n}P}\cdot\frac{1}{x_j} > 0.
 $$
 
 Since $F'(D)<0$, the implicit function theorem yields
@@ -201,11 +201,11 @@ Equation (2.2.4) is invariant under $(x,D)\mapsto(\tau x,\tau D)$, so $D$ is deg
 Divide (2.2.4) by $\mathrm{Ann}$:
 
 $$
-S+\frac{D}{\mathrm{Ann}}=D+\frac{D^{ n+1}}{\mathrm{Ann} n^{n}P}.
+S+\frac{D}{\mathrm{Ann}}=D+\frac{D^{\,n+1}}{\mathrm{Ann}\,n^{n}P}.
 $$
 
 As $\mathrm{Ann}\to\infty$, vanish the $1/\mathrm{Ann}$ terms to get $S=D$.
-As $\mathrm{Ann}\to 0^+$, (2.2.4) gives $D^{n}=n^{n}P\Rightarrow D=n P^{1/n}$.
+As $\mathrm{Ann}\to 0^+$, (2.2.4) gives $D^{n}=n^{n}P\Rightarrow D=n\,P^{1/n}$.
 
 ---
 
@@ -214,7 +214,7 @@ As $\mathrm{Ann}\to 0^+$, (2.2.4) gives $D^{n}=n^{n}P\Rightarrow D=n P^{1/n}$.
 Define
 
 $$
-D_P(D) \equiv \frac{D^{ n+1}}{n^{n}P},\qquad
+D_P(D) \equiv \frac{D^{\,n+1}}{n^{n}P},\qquad
 F'(D)=1-\mathrm{Ann}-\frac{(n+1)}{D}D_P(D).
 $$
 
@@ -229,7 +229,7 @@ Multiplying numerator and denominator by $D$ and simplifying yields the **closed
 
 $$
 D_{\text{new}}
-=\frac{\big(\mathrm{Ann} S + n D_P\big) D}{(\mathrm{Ann}-1) D + (n+1) D_P}
+=\frac{\big(\mathrm{Ann}\,S + n\,D_P\big)\,D}{(\mathrm{Ann}-1)\,D + (n+1)\,D_P}
 \tag{2.4.1}
 $$
 
@@ -238,7 +238,7 @@ This form is robust under integer arithmetic. In implementations, evaluate $D_P$
 **Convergence from a natural guess.** Let $r$ be the unique root. From §2.3.2, $r\le S$. With $D_0=S$, note
 
 $$
-F''(D)= -\frac{(n+1)n D^{ n-1}}{n^{n}P}<0,
+F''(D)= -\frac{(n+1)n\,D^{\,n-1}}{n^{n}P}<0,
 $$
 
 so $F$ is strictly decreasing and strictly concave on $(0,\infty)$. By the standard Newton monotonicity lemma for decreasing concave functions, $(D_k)$ defined by (2.4.1) is decreasing and bounded below by $r$, hence converges to $r$ (typically in <10 iterations).
@@ -259,26 +259,26 @@ Insert $(x_i',y)$ into (2.2.4):
 $$
 \mathrm{Ann}(S'+y) + D
  = 
-\mathrm{Ann}D + \frac{D^{ n+1}}{n^{n} (y Q_j)}.
+\mathrm{Ann}D + \frac{D^{\,n+1}}{n^{n}\,(y\,Q_j)}.
 $$
 
 Multiply by $y$ and rearrange:
 
 $$
-\mathrm{Ann} y^2 + (\mathrm{Ann}S' + D - \mathrm{Ann}D) y - \frac{D^{ n+1}}{n^{n}Q_j} = 0.
+\mathrm{Ann}\,y^2 + (\mathrm{Ann}S' + D - \mathrm{Ann}D)\,y - \frac{D^{\,n+1}}{n^{n}Q_j} = 0.
 $$
 
 Divide by $\mathrm{Ann}$ and define
 
 $$
 b  \equiv  S' + \frac{D}{\mathrm{Ann}},\qquad
-c  \equiv  \frac{D^{ n+1}}{n^{n} \mathrm{Ann} Q_j},
+c  \equiv  \frac{D^{\,n+1}}{n^{n}\,\mathrm{Ann}\,Q_j},
 $$
 
 to obtain the **canonical quadratic**:
 
 $$
-f(y)=y^2 + (b - D) y - c = 0
+f(y)=y^2 + (b - D)\,y - c = 0
 $$
 $$
 \tag{2.5.1}
@@ -293,7 +293,7 @@ $f$ is monic with $f''(y)=2>0$ (strictly convex), $f(0)=-c<0$, and $f(y)\to+\inf
 With $f'(y)=2y+(b-D)$, Newton’s method gives the **single-division update**
 
 $$
-y \leftarrow \frac{y^2 + c}{ 2y + b - D }
+y \leftarrow \frac{y^2 + c}{\,2y + b - D\,}
 $$
 $$
 \tag{2.5.2}
@@ -310,7 +310,7 @@ Initialize $y:=D$ (positive, correct scale) and stop when $|\Delta y|\le 1$ (int
 * **Near parity (constant-sum).** Writing (2.2.4) in normalized variables gives
   $\mathrm{Ann}\cdot(\tfrac{1}{n}\sum y_i)+1=\mathrm{Ann}+1/(\prod y_i)$.
   Linearizing around $y_i=1$ forces $\sum(y_i-1)=O(\|y-1\|^2)$: **first-order sum preservation**, i.e., slope $\approx 1$ per unit moved—constant-sum-like. Larger $A$ suppresses higher-order curvature.
-* **Imbalance (constant-product).** As imbalance grows, $D^{ n+1}/(n^{n}P)$ dominates (2.2.4), pushing behavior toward constant-product. In the dynamic-$\lambda$ view, $\lambda\propto P/(D/n)^n$ increases with product deviations, emphasizing the product term.
+* **Imbalance (constant-product).** As imbalance grows, $D^{\,n+1}/(n^{n}P)$ dominates (2.2.4), pushing behavior toward constant-product. In the dynamic-$\lambda$ view, $\lambda\propto P/(D/n)^n$ increases with product deviations, emphasizing the product term.
 
 ---
 
@@ -321,22 +321,22 @@ With $n=2$ (the implementation case), let $\mathrm{Ann}=4A$, $S=x_1+x_2$, $P=x_1
 * **Invariant (from (2.2.4)).**
 
   $$
-  \mathrm{Ann} (x_1+x_2) + D
+  \mathrm{Ann}\,(x_1+x_2) + D
    = 
-  \mathrm{Ann} D + \frac{D^{3}}{4 x_1 x_2}.
+  \mathrm{Ann}\,D + \frac{D^{3}}{4\,x_1 x_2}.
   $$
 * **Newton for $D$ (from (2.4.1)).** With $D_P=D^{3}/(4 x_1 x_2)$,
 
   $$
-  D  \leftarrow  \frac{(\mathrm{Ann}(x_1+x_2) + 2D_P) D}{(\mathrm{Ann}-1) D + 3D_P}.
+  D  \leftarrow  \frac{(\mathrm{Ann}(x_1+x_2) + 2D_P)\,D}{(\mathrm{Ann}-1)\,D + 3D_P}.
   $$
 * **Solve $y$ at fixed $D$ (from (2.5.1)–(2.5.2)).**
   Here $S'=x_i'$, $Q_j=x_i'$, so
 
   $$
   b = x_i' + \frac{D}{\mathrm{Ann}},\qquad
-  c = \frac{D^{3}}{4 \mathrm{Ann} x_i'},\qquad
-  y \leftarrow \frac{y^2 + c}{ 2y + b - D }.
+  c = \frac{D^{3}}{4\,\mathrm{Ann}\,x_i'},\qquad
+  y \leftarrow \frac{y^2 + c}{\,2y + b - D\,}.
   $$
 
 These are exactly the formulas used in the code.
@@ -522,13 +522,13 @@ The tests cover: monotonicity of `D`, fee-on-input behavior, and lower slippage 
 Below is **Section 4 — function–by–function analysis** in English, written as a stand-alone reference that maps each piece of code to the mathematics from **Section 2** (general $n$ with specialization to $n=2$). I use the equation labels from Section 2:
 
 * **(2.2.4)** — StableSwap invariant (general $n$)
-  $\mathrm{Ann} S + D = \mathrm{Ann} D + \dfrac{D^{ n+1}}{n^{n}P}$
+  $\mathrm{Ann}\,S + D = \mathrm{Ann}\,D + \dfrac{D^{\,n+1}}{n^{n}P}$
 * **(2.4.1)** — Newton update for $D$ (general $n$)
-  $D \leftarrow \dfrac{\big(\mathrm{Ann} S + n D_P\big) D}{(\mathrm{Ann}-1) D + (n+1) D_P}$, with $D_P=\dfrac{D^{ n+1}}{n^{n}P}$
+  $D \leftarrow \dfrac{\big(\mathrm{Ann}\,S + n\,D_P\big)\,D}{(\mathrm{Ann}-1)\,D + (n+1)\,D_P}$, with $D_P=\dfrac{D^{\,n+1}}{n^{n}P}$
 * **(2.5.1)** — Quadratic for $y$ at fixed $D$ (general $n$)
-  $y^2 + (b - D) y - c = 0$, where $b = S' + \dfrac{D}{\mathrm{Ann}}$, $c = \dfrac{D^{ n+1}}{n^{n} \mathrm{Ann} \prod_{k\ne j}x_k}$
+  $y^2 + (b - D)\,y - c = 0$, where $b = S' + \dfrac{D}{\mathrm{Ann}}$, $c = \dfrac{D^{\,n+1}}{n^{n}\,\mathrm{Ann}\,\prod_{k\ne j}x_k}$
 * **(2.5.2)** — Newton update for $y$ (closed form)
-  $y \leftarrow \dfrac{y^2 + c}{ 2y + b - D }$
+  $y \leftarrow \dfrac{y^2 + c}{\,2y + b - D\,}$
 
 Throughout the code, $n=2$ (USDC/USDT), so $n^n=4$ and $\mathrm{Ann}=A\cdot 4$.
 
@@ -654,8 +654,8 @@ fn compute_d(x: &[u128; N_COINS], ann: u128) -> u128 {
         d = num.checked_div(den).unwrap_or(0);
 ```
 
-* Numerator implements $(\mathrm{Ann} S + n D_P) D$.
-* Denominator implements $(\mathrm{Ann}-1) D + (n+1) D_P$.
+* Numerator implements $(\mathrm{Ann}\,S + n\,D_P)\,D$.
+* Denominator implements $(\mathrm{Ann}-1)\,D + (n+1)\,D_P$.
 * This is literally (2.4.1) with $n=2$.
 
 **Stopping rule:**
