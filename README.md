@@ -56,22 +56,22 @@ and let $A>0$ be the amplification parameter. We seek an invariant $D=D(x_1,\dot
 
 To encode (H) and keep algebra minimal, we write the **two canonical benchmarks** directly at **degree $n$** in $(x_i)$ and $D$:
 
-* **Sum benchmark (degree $n$)**
+**Sum benchmark (degree $n$)**
 
-  $$
-  \,D^{\,n-1}\,\sum_{i=1}^{n} x_i \;=\; D^{\,n}\,
-  \quad\Longleftrightarrow\quad
-  \sum_{i=1}^{n} x_i \;=\; D.
-  \tag{2.2.1a}
-  $$
-* **Product benchmark (degree $n$)**
+$$
+\,D^{\,n-1}\,\sum_{i=1}^{n} x_i \;=\; D^{\,n}\,
+\quad\Longleftrightarrow\quad
+\sum_{i=1}^{n} x_i \;=\; D.
+\tag{2.2.1a}
+$$
+**Product benchmark (degree $n$)**
 
-  $$
-  \,\prod_{i=1}^{n} x_i \;=\; \Big(\frac{D}{n}\Big)^{\!n}\,
-  \quad\Longleftrightarrow\quad
-  \Big(\prod x_i\Big)^{1/n} \;=\; \frac{D}{n}.
-  \tag{2.2.1b}
-  $$
+$$
+\prod_{i=1}^{n} x_i \;=\; \Big(\frac{D}{n}\Big)^{\!n}\,
+\quad\Longleftrightarrow\quad
+\Big(\prod x_i\Big)^{1/n} \;=\; \frac{D}{n}.
+\tag{2.2.1b}
+$$
 
 At perfect balance $x_i=D/n$, both (2.2.1a) and (2.2.1b) hold. Writing them at the same total degree ensures homogeneity and simplifies blending.
 
@@ -83,9 +83,7 @@ At perfect balance $x_i=D/n$, both (2.2.1a) and (2.2.1b) hold. Writing them at t
 
 $$
 
-\lambda\,D^{\,n-1}\sum_{i=1}^{n} x_i \;+\; \prod_{i=1}^{n} x_i
-\;=\;
-\lambda\,D^{\,n} \;+\; \Big(\frac{D}{n}\Big)^{\!n}
+\lambda\,D^{\,n-1}\sum_{i=1}^{n} x_i \;+\; \prod_{i=1}^{n} x_i=\lambda\,D^{\,n} \;+\; \Big(\frac{D}{n}\Big)^{\!n}
 \tag{2.2.2}
 $$
 
@@ -94,9 +92,7 @@ This holds exactly at parity for any $\lambda>0$, is symmetric in $(x_i)$, and i
 **Dynamic weight.** To obtain a useful invariant with a **single tuning parameter $A>0$**, make $\lambda$ **state-dependent**:
 
 $$
-\lambda \;\equiv\; \frac{A\,\prod_{i=1}^{n} x_i}{\big(D/n\big)^{n}}
-\;=\;
-\frac{A\,n^{n}\,P}{D^{\,n}}
+\lambda \;\equiv\; \frac{A\,\prod_{i=1}^{n} x_i}{\big(D/n\big)^{n}}=\frac{A\,n^{n}\,P}{D^{\,n}}
 \tag{2.2.3}
 $$
 
@@ -117,17 +113,13 @@ $$
 Equate LHS and RHS and multiply by $D>0$:
 
 $$
-A n^{n} P\,S + P\,D
-\;=\;
-A n^{n} P\,D + \frac{D^{\,n+1}}{n^{n}}.
+A n^{n} P\,S + P\,D=A n^{n} P\,D + \frac{D^{\,n+1}}{n^{n}}.
 $$
 
 Divide by $P>0$ and set $\mathrm{Ann}\equiv A n^{n}$ to obtain the **final invariant** (general $n$):
 
 $$
-\mathrm{Ann}\,S \;+\; D
-\;=\;
-\mathrm{Ann}\,D \;+\; \frac{D^{\,n+1}}{n^{n}\,P}
+\mathrm{Ann}\,S \;+\; D=\mathrm{Ann}\,D \;+\; \frac{D^{\,n+1}}{n^{n}\,P}
 \tag{2.2.4}
 $$
 
