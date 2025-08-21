@@ -378,7 +378,7 @@ Add the dependency to your project’s `Cargo.toml` (replace with your real GitH
 ```toml
 [dependencies]
 # Git tag (recommended)
-stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", tag = "v0.1.0" }
+stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", tag = "v0.1.0", package = "stable-swap-rs" }
 # Or pin to a commit
 # stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", rev = "<commit-hash>" }
 ```
@@ -403,14 +403,13 @@ Edit `demo-stable/Cargo.toml` and add the Git dependency as shown above. Then pa
 ```rust
 use stable_swap_rs::{StableSwapPool, constant_product_dy};
 
-fn main() -> anyhow::Result<()> {
-    // Amounts are 6-decimal integers: 1 USDC = 1_000_000
-    // Build a balanced pool: 10,000 USDC & 10,000 USDT
-    let mut pool = StableSwapPool::new(
-        [10_000_000_000, 10_000_000_000], // 10,000 * 1e6
-        100, // A = 100
-    );
-    pool.fee_bps = 30; // 0.30% input-side fee
+fn main() {
+    // Amounts use 6 decimals (1 USDC = 1_000_000)
+    let mut pool = StableSwapPool {
+        reserves: [10_000_000_000, 10_000_000_000], // 10,000 each
+        amplification_coefficient: 100,             // A = 100
+        fee_bps: 30,                                // 0.30% input-side fee
+    };
 
     // Quote: swap 100 USDC -> USDT
     let dx: u64 = 100_000_000; // 100 * 1e6
@@ -418,26 +417,24 @@ fn main() -> anyhow::Result<()> {
     println!("StableSwap quote: 100 USDC -> {} USDT (6dp int)", dy);
 
     // Compare with constant product (no fee)
-    let dy_xyk = constant_product_dy(pool.reserves, 0, 1, dx).unwrap();
+    let dy_xyk = constant_product_dy(pool.reserves, 0, 1, dx).expect("xyk failed");
     println!("x*y=k (no fee) output: {}", dy_xyk);
 
-    // --- Executing the swap (caller updates reserves) ---
+    // --- Execute the swap (caller updates reserves) ---
     let fee_bps = pool.fee_bps as u128;
     let dx_net = (dx as u128) * (10_000u128 - fee_bps) / 10_000u128;
 
     pool.reserves[0] = (pool.reserves[0] as u128 + dx_net) as u64; // add net input
-    pool.reserves[1] = pool.reserves[1].checked_sub(dy)
-        .expect("insufficient reserve for execution"); // subtract output
+    pool.reserves[1] = pool.reserves[1].checked_sub(dy).expect("insufficient reserve");
 
-    // Optional: inspect invariant D after trade
+    // Inspect invariant D after trade
     let d_now = pool.get_d();
     println!("D after trade: {}", d_now);
 
     // Curve-only slippage estimate (ignoring fees)
+    pool.fee_bps = 0;
     let s_bps = pool.calculate_slippage_bps(100_000_000);
     println!("curve-only slippage for 100 USDC: {} bps", s_bps);
-
-    Ok(())
 }
 ```
 
