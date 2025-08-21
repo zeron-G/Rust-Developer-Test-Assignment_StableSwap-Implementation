@@ -43,8 +43,8 @@ The implementation provides a **transparent, reproducible** reference for Stable
 Let $n\ge 2$ assets have **positive** balances $x_1,\dots,x_n>0$. Define
 
 $$
-S \;\equiv\; \sum_{i=1}^n x_i,\qquad 
-P \;\equiv\; \prod_{i=1}^n x_i,
+S \equiv \sum_{i=1}^n x_i,\qquad 
+P \equiv \prod_{i=1}^n x_i,
 $$
 
 and let $A>0$ be the amplification parameter. We seek an invariant $D=D(x_1,\dots,x_n;A)>0$ that satisfies:
@@ -59,7 +59,7 @@ To encode (H) and keep algebra minimal, we write the **two canonical benchmarks*
 **Sum benchmark (degree $n$)**
 
 $$
-D^{\,n-1}\,\sum_{i=1}^{n} x_i \;=\; D^{\,n}
+D^{n-1}\sum_{i=1}^{n} x_i = D^{n}
 \quad\Longleftrightarrow\quad
 \sum_{i=1}^{n} x_i =D.
 $$
@@ -70,9 +70,9 @@ $$
 **Product benchmark (degree $n$)**
 
 $$
-\prod_{i=1}^{n} x_i \;=\; \Big(\frac{D}{n}\Big)^{\!n}\,
+\prod_{i=1}^{n} x_i \;=\; \Big(\frac{D}{n}\Big)^{\!n}
 \quad\Longleftrightarrow\quad
-\Big(\prod x_i\Big)^{1/n} \;=\; \frac{D}{n}.
+\Big(\prod x_i\Big)^{1/n} = \frac{D}{n}.
 $$
 $$
 \tag{2.2.1b}
@@ -87,7 +87,7 @@ At perfect balance $x_i=D/n$, both (2.2.1a) and (2.2.1b) hold. Writing them at t
 **Blend the benchmarks.** Introduce a weight $\lambda>0$ and combine (2.2.1a–b) into one degree-$n$ identity:
 
 $$
-\lambda\,D^{\,n-1}\sum_{i=1}^{n} x_i \;+\; \prod_{i=1}^{n} x_i=\lambda\,D^{\,n} \;+\; \Big(\frac{D}{n}\Big)^{\!n}
+\lambdaD^{n-1}\sum_{i=1}^{n} x_i \;+\; \prod_{i=1}^{n} x_i=\lambdaD^{n} \;+\; \Big(\frac{D}{n}\Big)^{n}
 $$
 $$
 \tag{2.2.2}
@@ -98,7 +98,7 @@ This holds exactly at parity for any $\lambda>0$, is symmetric in $(x_i)$, and i
 **Dynamic weight.** To obtain a useful invariant with a **single tuning parameter $A>0$**, make $\lambda$ **state-dependent**:
 
 $$
-\lambda \;\equiv\; \frac{A\,\prod_{i=1}^{n} x_i}{\big(D/n\big)^{n}}=\frac{A\,n^{n}\,P}{D^{\,n}}
+\lambda \equiv \frac{A\prod_{i=1}^{n} x_i}{\big(D/n\big)^{n}}=\frac{An^{n}P}{D^{n}}
 $$
 $$
 \tag{2.2.3}
@@ -109,25 +109,25 @@ $$
 Left-hand side:
 
 $$
-\lambda\,D^{\,n-1}S + P=\Big(\frac{A n^{n} P}{D^{\,n}}\Big) D^{\,n-1} S + P=\frac{A n^{n} P}{D}\,S + P.
+\lambdaD^{n-1}S + P=\Big(\frac{A n^{n} P}{D^{n}}\Big) D^{n-1} S + P=\frac{A n^{n} P}{D}S + P.
 $$
 
 Right-hand side:
 
 $$
-\lambda\,D^{\,n} + \Big(\frac{D}{n}\Big)^{\!n}=\Big(\frac{A n^{n} P}{D^{\,n}}\Big) D^{\,n} + \frac{D^{\,n}}{n^{n}}=A n^{n} P + \frac{D^{\,n}}{n^{n}}.
+\lambdaD^{n} + \Big(\frac{D}{n}\Big)^{n}=\Big(\frac{A n^{n} P}{D^{n}}\Big) D^{n} + \frac{D^{n}}{n^{n}}=A n^{n} P + \frac{D^{n}}{n^{n}}.
 $$
 
 Equate LHS and RHS and multiply by $D>0$:
 
 $$
-A n^{n} P\,S + P\,D=A n^{n} P\,D + \frac{D^{\,n+1}}{n^{n}}.
+A n^{n} PS + PD=A n^{n} PD + \frac{D^{n+1}}{n^{n}}.
 $$
 
 Divide by $P>0$ and set $\mathrm{Ann}\equiv A n^{n}$ to obtain the **final invariant** (general $n$):
 
 $$
-\mathrm{Ann}\,S \;+\; D=\mathrm{Ann}\,D \;+\; \frac{D^{\,n+1}}{n^{n}\,P}
+\mathrm{Ann}S + D=\mathrm{Ann}D \;+\; \frac{D^{n+1}}{n^{n}P}
 $$
 $$
 \tag{2.2.4}
@@ -148,15 +148,15 @@ This is the Curve StableSwap invariant in the whitepaper form, now derived from 
 Let
 
 $$
-F(D)\;\equiv\;\mathrm{Ann}\,S + D - \mathrm{Ann}\,D - \frac{D^{\,n+1}}{n^{n}P}.
+F(D)\;\equiv\;\mathrm{Ann}S + D - \mathrm{Ann}D - \frac{D^{n+1}}{n^{n}P}.
 $$
 
 ### 2.3.1 Existence and uniqueness
 
-$F$ is continuous on $(0,\infty)$, with $F(0^+)=\mathrm{Ann}\,S>0$ and $F(\infty)=-\infty$. Moreover,
+$F$ is continuous on $(0,\infty)$, with $F(0^+)=\mathrm{Ann}S>0$ and $F(\infty)=-\infty$. Moreover,
 
 $$
-F'(D)=1-\mathrm{Ann}-\frac{(n+1)D^{\,n}}{n^{n}P}\;<\;0\quad(\forall D>0).
+F'(D)=1-\mathrm{Ann}-\frac{(n+1)D^{n}}{n^{n}P}\;<\;0\quad(\forall D>0).
 $$
 
 Thus $F$ is strictly decreasing from $+\infty$ to $-\infty$, proving a **unique** positive root $D$.
@@ -166,7 +166,7 @@ Thus $F$ is strictly decreasing from $+\infty$ to $-\infty$, proving a **unique*
 Evaluate at $D=S$ and use AM–GM, $S^{n}\ge n^{n}P$:
 
 $$
-F(S)=S-\frac{S^{\,n+1}}{n^{n}P}=S\!\left(1-\frac{S^{n}}{n^{n}P}\right)\le 0.
+F(S)=S-\frac{S^{n+1}}{n^{n}P}=S\left(1-\frac{S^{n}}{n^{n}P}\right)\le 0.
 $$
 
 Since $F(0^+)>0$ and $F$ is strictly decreasing, the unique root satisfies
