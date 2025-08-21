@@ -73,6 +73,8 @@ $$
 \prod_{i=1}^{n} x_i \;=\; \Big(\frac{D}{n}\Big)^{\!n}\,
 \quad\Longleftrightarrow\quad
 \Big(\prod x_i\Big)^{1/n} \;=\; \frac{D}{n}.
+$$
+$$
 \tag{2.2.1b}
 $$
 
@@ -85,8 +87,9 @@ At perfect balance $x_i=D/n$, both (2.2.1a) and (2.2.1b) hold. Writing them at t
 **Blend the benchmarks.** Introduce a weight $\lambda>0$ and combine (2.2.1a–b) into one degree-$n$ identity:
 
 $$
-
 \lambda\,D^{\,n-1}\sum_{i=1}^{n} x_i \;+\; \prod_{i=1}^{n} x_i=\lambda\,D^{\,n} \;+\; \Big(\frac{D}{n}\Big)^{\!n}
+$$
+$$
 \tag{2.2.2}
 $$
 
@@ -96,6 +99,8 @@ This holds exactly at parity for any $\lambda>0$, is symmetric in $(x_i)$, and i
 
 $$
 \lambda \;\equiv\; \frac{A\,\prod_{i=1}^{n} x_i}{\big(D/n\big)^{n}}=\frac{A\,n^{n}\,P}{D^{\,n}}
+$$
+$$
 \tag{2.2.3}
 $$
 
@@ -123,6 +128,8 @@ Divide by $P>0$ and set $\mathrm{Ann}\equiv A n^{n}$ to obtain the **final invar
 
 $$
 \mathrm{Ann}\,S \;+\; D=\mathrm{Ann}\,D \;+\; \frac{D^{\,n+1}}{n^{n}\,P}
+$$
+$$
 \tag{2.2.4}
 $$
 
@@ -272,6 +279,8 @@ to obtain the **canonical quadratic**:
 
 $$
 f(y)=y^2 + (b - D)\,y - c = 0
+$$
+$$
 \tag{2.5.1}
 $$
 
@@ -285,6 +294,8 @@ With $f'(y)=2y+(b-D)$, Newton’s method gives the **single-division update**
 
 $$
 y \leftarrow \frac{y^2 + c}{\,2y + b - D\,}
+$$
+$$
 \tag{2.5.2}
 $$
 
