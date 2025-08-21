@@ -62,6 +62,8 @@ $$
 D^{\,n-1}\,\sum_{i=1}^{n} x_i \;=\; D^{\,n}
 \quad\Longleftrightarrow\quad
 \sum_{i=1}^{n} x_i =D.
+$$
+$$
 \tag{2.2.1a}
 $$
 
