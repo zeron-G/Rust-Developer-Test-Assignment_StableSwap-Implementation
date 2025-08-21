@@ -59,8 +59,9 @@ To encode (H) and keep algebra minimal, we write the **two canonical benchmarks*
 **Sum benchmark (degree $n$)**
 
 $$
-\,D^{\,n-1}\,\sum_{i=1}^{n} x_i \;=\; D^{\,n}\,
-\sum_{i=1}^{n} x_i \;=\; D.
+D^{\,n-1}\,\sum_{i=1}^{n} x_i \;=\; D^{\,n}
+\quad\Longleftrightarrow\quad
+\sum_{i=1}^{n} x_i =D.
 \tag{2.2.1a}
 $$
 
