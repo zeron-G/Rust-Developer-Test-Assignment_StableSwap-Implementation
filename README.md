@@ -64,6 +64,7 @@ $$
 \sum_{i=1}^{n} x_i \;=\; D.
 \tag{2.2.1a}
 $$
+
 **Product benchmark (degree $n$)**
 
 $$
