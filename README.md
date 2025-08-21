@@ -87,7 +87,7 @@ At perfect balance $x_i=D/n$, both (2.2.1a) and (2.2.1b) hold. Writing them at t
 **Blend the benchmarks.** Introduce a weight $\lambda>0$ and combine (2.2.1a–b) into one degree-$n$ identity:
 
 $$
-\lambda D^{n-1}\sum_{i=1}^{n} x_i + \prod_{i=1}^{n} x_i=\lambdaD^{n} + \Big(\frac{D}{n}\Big)^{n}
+\lambda D^{n-1}\sum_{i=1}^{n} x_i + \prod_{i=1}^{n} x_i=\lambda D^{n} + \Big(\frac{D}{n}\Big)^{n}
 $$
 $$
 \tag{2.2.2}
