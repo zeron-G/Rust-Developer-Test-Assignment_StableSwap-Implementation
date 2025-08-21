@@ -230,6 +230,8 @@ Multiplying numerator and denominator by $D$ and simplifying yields the **closed
 $$
 D_{\text{new}}
 =\frac{\big(\mathrm{Ann}\,S + n\,D_P\big)\,D}{(\mathrm{Ann}-1)\,D + (n+1)\,D_P}
+$$
+$$
 \tag{2.4.1}
 $$
 
@@ -318,26 +320,28 @@ Initialize $y:=D$ (positive, correct scale) and stop when $|\Delta y|\le 1$ (int
 
 With $n=2$ (the implementation case), let $\mathrm{Ann}=4A$, $S=x_1+x_2$, $P=x_1x_2$.
 
-* **Invariant (from (2.2.4)).**
+**Invariant (from (2.2.4)).**
 
-  $$
-  \mathrm{Ann}\,(x_1+x_2) + D
-   = 
-  \mathrm{Ann}\,D + \frac{D^{3}}{4\,x_1 x_2}.
-  $$
-* **Newton for $D$ (from (2.4.1)).** With $D_P=D^{3}/(4 x_1 x_2)$,
+$$
+\mathrm{Ann}\,(x_1+x_2) + D
+= 
+\mathrm{Ann}\,D + \frac{D^{3}}{4\,x_1 x_2}.
+$$
 
-  $$
-  D  \leftarrow  \frac{(\mathrm{Ann}(x_1+x_2) + 2D_P)\,D}{(\mathrm{Ann}-1)\,D + 3D_P}.
-  $$
-* **Solve $y$ at fixed $D$ (from (2.5.1)–(2.5.2)).**
-  Here $S'=x_i'$, $Q_j=x_i'$, so
+**Newton for $D$ (from (2.4.1)).** With $D_P=D^{3}/(4 x_1 x_2)$,
 
-  $$
-  b = x_i' + \frac{D}{\mathrm{Ann}},\qquad
-  c = \frac{D^{3}}{4\,\mathrm{Ann}\,x_i'},\qquad
-  y \leftarrow \frac{y^2 + c}{\,2y + b - D\,}.
-  $$
+$$
+D  \leftarrow  \frac{(\mathrm{Ann}(x_1+x_2) + 2D_P)\,D}{(\mathrm{Ann}-1)\,D + 3D_P}.
+$$
+
+**Solve $y$ at fixed $D$ (from (2.5.1)–(2.5.2)).**
+Here $S'=x_i'$, $Q_j=x_i'$, so
+
+$$
+b = x_i' + \frac{D}{\mathrm{Ann}},\qquad
+c = \frac{D^{3}}{4\,\mathrm{Ann}\,x_i'},\qquad
+y \leftarrow \frac{y^2 + c}{\,2y + b - D\,}.
+$$
 
 These are exactly the formulas used in the code.
 
@@ -517,20 +521,6 @@ cargo test -q
 ```
 
 The tests cover: monotonicity of `D`, fee-on-input behavior, and lower slippage vs. x\*y=k in balanced pools.
-
-
-Below is **Section 4 — function–by–function analysis** in English, written as a stand-alone reference that maps each piece of code to the mathematics from **Section 2** (general $n$ with specialization to $n=2$). I use the equation labels from Section 2:
-
-* **(2.2.4)** — StableSwap invariant (general $n$)
-  $\mathrm{Ann}\,S + D = \mathrm{Ann}\,D + \dfrac{D^{\,n+1}}{n^{n}P}$
-* **(2.4.1)** — Newton update for $D$ (general $n$)
-  $D \leftarrow \dfrac{\big(\mathrm{Ann}\,S + n\,D_P\big)\,D}{(\mathrm{Ann}-1)\,D + (n+1)\,D_P}$, with $D_P=\dfrac{D^{\,n+1}}{n^{n}P}$
-* **(2.5.1)** — Quadratic for $y$ at fixed $D$ (general $n$)
-  $y^2 + (b - D)\,y - c = 0$, where $b = S' + \dfrac{D}{\mathrm{Ann}}$, $c = \dfrac{D^{\,n+1}}{n^{n}\,\mathrm{Ann}\,\prod_{k\ne j}x_k}$
-* **(2.5.2)** — Newton update for $y$ (closed form)
-  $y \leftarrow \dfrac{y^2 + c}{\,2y + b - D\,}$
-
-Throughout the code, $n=2$ (USDC/USDT), so $n^n=4$ and $\mathrm{Ann}=A\cdot 4$.
 
 ---
 
@@ -902,12 +892,6 @@ Solscan. (n.d.). *USDC (USDC) — Solana token page (decimals: 6)*. [https://sol
 
 Uniswap Labs. (n.d.). *How Uniswap works* (Docs). [https://docs.uniswap.org/contracts/v2/concepts/protocol-overview/how-uniswap-works](https://docs.uniswap.org/contracts/v2/concepts/protocol-overview/how-uniswap-works) ([Uniswap][2])
 
----
-
-**Notes for inclusion:**
-
-* If you later change the target chain or tokens, update the **decimal** citations accordingly.
-* If your instructor prefers a minimal reference list, you can keep only Egorov (2019), Uniswap V2/V3 whitepapers, and the Solana mint/decimals sources.
 
 [1]: https://app.uniswap.org/whitepaper.pdf?utm_source=chatgpt.com "Uniswap v2 Core"
 [2]: https://docs.uniswap.org/contracts/v2/concepts/protocol-overview/how-uniswap-works?utm_source=chatgpt.com "How Uniswap works"
