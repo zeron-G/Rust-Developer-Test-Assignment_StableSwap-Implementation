@@ -87,7 +87,7 @@ At perfect balance $x_i=D/n$, both (2.2.1a) and (2.2.1b) hold. Writing them at t
 **Blend the benchmarks.** Introduce a weight $\lambda>0$ and combine (2.2.1a–b) into one degree-$n$ identity:
 
 $$
-\lambdaD^{n-1}\sum_{i=1}^{n} x_i + \prod_{i=1}^{n} x_i=\lambdaD^{n} + \Big(\frac{D}{n}\Big)^{n}
+\lambda D^{n-1}\sum_{i=1}^{n} x_i + \prod_{i=1}^{n} x_i=\lambdaD^{n} + \Big(\frac{D}{n}\Big)^{n}
 $$
 $$
 \tag{2.2.2}
@@ -109,13 +109,13 @@ $$
 Left-hand side:
 
 $$
-\lambdaD^{n-1}S + P=\Big(\frac{A n^{n} P}{D^{n}}\Big) D^{n-1} S + P=\frac{A n^{n} P}{D}S + P.
+\lambda D^{n-1}S + P=\Big(\frac{A n^{n} P}{D^{n}}\Big) D^{n-1} S + P=\frac{A n^{n} P}{D}S + P.
 $$
 
 Right-hand side:
 
 $$
-\lambdaD^{n} + \Big(\frac{D}{n}\Big)^{n}=\Big(\frac{A n^{n} P}{D^{n}}\Big) D^{n} + \frac{D^{n}}{n^{n}}=A n^{n} P + \frac{D^{n}}{n^{n}}.
+\lambda D^{n} + \Big(\frac{D}{n}\Big)^{n}=\Big(\frac{A n^{n} P}{D^{n}}\Big) D^{n} + \frac{D^{n}}{n^{n}}=A n^{n} P + \frac{D^{n}}{n^{n}}.
 $$
 
 Equate LHS and RHS and multiply by $D>0$:
