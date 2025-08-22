@@ -52,7 +52,7 @@ impl StableSwapPool {
     /// Return invariant D for current reserves
     pub fn get_d(&self) -> u64 {
         let amp = self.ann();
-        let x = [self.reserves[0] as u128, self.reserves[1] as u128];
+        let x = [self.reserves[0] as u128, self.reserves[1] as u128]; 
         let d = compute_d(&x, amp);
         d as u64
     }
@@ -81,8 +81,7 @@ impl StableSwapPool {
                 .and_then(|v| v.checked_sub(1)) 
                 .ok_or(SwapError::Math)?;
             return Ok(dy as u64);
-        }
-
+        }// uniswapped case (A=0), use constant product
 
         let x_pre = [self.reserves[0] as u128, self.reserves[1] as u128];
         let d = compute_d(&x_pre, amp);
@@ -112,10 +111,8 @@ impl StableSwapPool {
         // effective price = dx/dy; slippage = (price-1)*1e4 bps
         let price_num = amount as u128;
         let price_den = dy as u128;
-        // let one = 1u128;
-        // price - 1 = (num/den) - 1 = (num - den)/den
         let diff_num = price_num.saturating_sub(price_den);
-        let slippage_bps = mul_div(diff_num * 10_000u128, 1, price_den).unwrap_or(0);
+        let slippage_bps = mul_div(diff_num * 10_000u128, 1, price_den).unwrap_or(0);//p=(dx-dy)/dy
         slippage_bps as u16
     }
 
@@ -133,18 +130,18 @@ fn compute_d(x: &[u128; N_COINS], ann: u128) -> u128 {
         // D_P = D^(n+1) / (n^n * prod(x)) implemented iteratively
         let mut d_p = d;
         for k in 0..N_COINS {
-            let denom = x[k].saturating_mul(N_COINS as u128);
+            let denom = x[k].saturating_mul(N_COINS as u128);//2x
             if denom == 0 { return 0; }
-            d_p = match mul_div(d_p, d, denom) { Some(v) => v, None => return 0 };
+            d_p = match mul_div(d_p, d, denom) { Some(v) => v, None => return 0 };// dp*D/2x
         }
         let prev = d;
         let num = (ann.saturating_mul(s) + d_p.saturating_mul(N_COINS as u128))
-            .saturating_mul(d);
+            .saturating_mul(d);//(AnnS+nDp)D
         let den = (ann.saturating_sub(1)).saturating_mul(d)
-            + (N_COINS as u128 + 1) * d_p;
-        if den == 0 { return 0; }
+            + (N_COINS as u128 + 1) * d_p;// (Ann-1)D + (n+1)Dp
+        if den == 0 { return 0; }//check div-by-zero
         d = match num.checked_div(den) { Some(v) => v, None => return 0 };
-        if d > prev { if d - prev <= 1 { break; }} else { if prev - d <= 1 { break; }}
+        if d > prev { if d - prev <= 1 { break; }} else { if prev - d <= 1 { break; }}//check convergence
     }
     d
 }
@@ -159,10 +156,10 @@ fn get_y(i: usize, j: usize, xp: &[u128; N_COINS], d: u128, ann: u128) -> Result
         let xk = xp[k];
         s = s.saturating_add(xk);
         let denom = xk.saturating_mul(N_COINS as u128);
-        c = mul_div(c, d, denom).ok_or(SwapError::Math)?;
+        c = mul_div(c, d, denom).ok_or(SwapError::Math)?;// c = c * D / (n * x_except_j)
     }
     // c = D^{n+1}/(n^n * prod(x_except_j)) * 1/Ann
-    c = mul_div(c, d, ann.saturating_mul(N_COINS as u128)).ok_or(SwapError::Math)?;
+    c = mul_div(c, d, ann.saturating_mul(N_COINS as u128)).ok_or(SwapError::Math)?;// c = c*D/ (Ann*n)
     // b = S' + D/Ann
     let b = s + d / ann;
 
@@ -194,7 +191,7 @@ pub fn constant_product_dy(reserves: [u64;2], i: usize, j: usize, dx: u64) -> Op
     let x = reserves[i] as u128;
     let y = reserves[j] as u128;
     let k = x.checked_mul(y)?;
-    let x = x.checked_add(dx as u128)?; // 用新绑定遮蔽旧的 x
+    let x = x.checked_add(dx as u128)?; //shawdowing, // x = x + dx
     let new_y = k.checked_div(x)?;
     let dy = y.checked_sub(new_y)?.saturating_sub(1);
     Some(dy as u64)
@@ -210,7 +207,7 @@ mod tests {
         let p1 = StableSwapPool { reserves: [1_000_000, 1_000_000], amplification_coefficient: 100, fee_bps: 0 };
         let p2 = StableSwapPool { reserves: [2_000_000, 2_000_000], amplification_coefficient: 100, fee_bps: 0 };
         assert!(p2.get_d() > p1.get_d());
-    }
+    }// x increases, D increases
 
     #[test]
     fn basic_swap_less_slippage_than_xyk() {
@@ -219,7 +216,7 @@ mod tests {
         let dy_stable = pool.get_dy(0, 1, dx).unwrap();
         let dy_xyk = constant_product_dy(pool.reserves, 0, 1, dx).unwrap();
         assert!(dy_stable > dy_xyk, "StableSwap should output more than x*y=k (less slippage)");
-    }
+    }//less slippage
 
     #[test]
     fn fee_is_applied_on_input() {
@@ -229,39 +226,39 @@ mod tests {
         pool.fee_bps = 0;
         let out_no_fee = pool.get_dy(0, 1, dx).unwrap();
         assert!(out_with_fee < out_no_fee);
-    }
+    }//fee is applied correctly
 
     #[test]
     fn slippage_bps_reasonable() {
         let pool = StableSwapPool { reserves: [5_000_000_000, 5_000_000_000], amplification_coefficient: 100, fee_bps: 0 };
         let s = pool.calculate_slippage_bps(500_000_000); // trade 500
         assert!(s < 1000); // < 1% for balanced pool with A=100
-    }
+    }//slippage is low
 
     #[test]
     fn error_on_bad_index_and_zero_trade() {
         let pool = StableSwapPool { reserves: [1_000_000, 1_000_000], amplification_coefficient: 100, fee_bps: 0 };
         assert!(matches!(pool.get_dy(0, 0, 1), Err(SwapError::BadIndex))); // i == j
         assert!(matches!(pool.get_dy(0, 1, 0), Err(SwapError::ZeroTrade))); // dx == 0
-    }
+    }// bad index and zero trade errors returned correctly
 
     #[test]
     fn error_on_no_liquidity() {
         let pool = StableSwapPool { reserves: [0, 1_000_000], amplification_coefficient: 100, fee_bps: 0 };
         assert!(matches!(pool.get_dy(0, 1, 1_000), Err(SwapError::NoLiquidity)));
-    }
+    }// no liquidity error returned correctly
 
     #[test]
     fn works_in_constant_product_limit_a_zero() {
         let pool = StableSwapPool { reserves: [1_000_000_000, 1_000_000_000], amplification_coefficient: 0, fee_bps: 0 };
         let dy = pool.get_dy(0, 1, 100_000_000).unwrap();
         assert!(dy > 0); // still quotes in the A→0 limit
-    }
+    }// works in constant product limit (A=0)
 
     #[test]
     fn extreme_imbalance_still_converges() {
         let pool = StableSwapPool { reserves: [10_000_000_000, 10_000], amplification_coefficient: 200, fee_bps: 0 };
         let dy = pool.get_dy(0, 1, 1_000_000).unwrap(); // small trade into the thin side
         assert!(dy > 0);
-    }
+    }// extreme imbalance still converges
 }

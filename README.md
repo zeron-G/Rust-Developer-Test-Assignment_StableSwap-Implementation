@@ -323,9 +323,7 @@ With $n=2$ (the implementation case), let $\mathrm{Ann}=4A$, $S=x_1+x_2$, $P=x_1
 **Invariant (from (2.2.4)).**
 
 $$
-\mathrm{Ann}\,(x_1+x_2) + D
-= 
-\mathrm{Ann}\,D + \frac{D^{3}}{4\,x_1 x_2}.
+\mathrm{Ann}\,(x_1+x_2) + D = \mathrm{Ann}\,D + \frac{D^{3}}{4\,x_1 x_2}.
 $$
 
 **Newton for $D$ (from (2.4.1)).** With $D_P=D^{3}/(4 x_1 x_2)$,
