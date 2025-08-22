@@ -259,9 +259,7 @@ $$
 Insert $(x_i',y)$ into (2.2.4):
 
 $$
-\mathrm{Ann}(S'+y) + D
- = 
-\mathrm{Ann}D + \frac{D^{\,n+1}}{n^{n}\,(y\,Q_j)}.
+\mathrm{Ann}(S'+y) + D = \mathrm{Ann}D + \frac{D^{\,n+1}}{n^{n}\,(y\,Q_j)}.
 $$
 
 Multiply by $y$ and rearrange:
