@@ -380,7 +380,7 @@ Add the dependency to your project’s `Cargo.toml` (replace with your real GitH
 ```toml
 [dependencies]
 # Git tag (recommended)
-stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", tag = "v0.1.0", package = "stable-swap-rs" }
+stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", tag = "v1.0.0", package = "stable-swap-rs" }
 # Or pin to a commit
 # stable-swap-rs = { git = "https://github.com/zeron-G/Rust-Developer-Test-Assignment_StableSwap-Implementation", rev = "<commit-hash>" }
 ```
@@ -610,6 +610,7 @@ fn compute_d(x: &[u128; N_COINS], ann: u128) -> u128 {
     let s = x[0] + x[1];    // S = sum x_i
     if s == 0 { return 0; }
     let mut d = s;          // initial guess D0 = S  (cf. §2.4 convergence lemma)
+}
 ```
 
 * `d = s` is the recommended initial guess. In §2.3.2, $D\le S$ and $D=S$ iff balanced; with $F''<0$ (§2.4), Newton from $S$ is monotone decreasing and convergent.
@@ -624,6 +625,7 @@ fn compute_d(x: &[u128; N_COINS], ann: u128) -> u128 {
             if denom == 0 { return 0; }
             d_p = match mul_div(d_p, d, denom) { Some(v) => v, None => return 0 };
         }
+    }
 ```
 
 * Loop proves: after the first pass, $d_p = \dfrac{D^2}{x_0 n}$; after second,
@@ -827,31 +829,133 @@ pub fn calculate_slippage_bps(&self, amount: u64) -> u16 {
 
 ---
 
-## 4.11 Tests — mapping to Section 2 properties
+## 4.11 Tests — Mapping to Section 2 Properties
+
+This suite validates the mathematical properties derived in **Section 2** and the correctness of the integer implementation. Each test names the exact behavior, the relevant math (with section references), and what a failure would usually indicate.
+
+### (1) `d_monotonic_in_reserves`
+
+**Code:**
 
 ```rust
-#[test] fn d_monotonic_in_reserves() { ... }
+#[test]
+fn d_monotonic_in_reserves() { /* ... */ }
 ```
 
-* Increases both reserves $\Rightarrow$ `get_d()` increases. Matches §2.3.3 (∂D/∂xⱼ>0) and §2.3.2 (D≤S, monotone in $x$).
+**What it checks:** Increasing both reserves strictly increases the invariant `D`.
+**Math:** §2.3.3 shows $\partial D/\partial x_j>0$ (monotone in each reserve). §2.3.2 gives $D\le S=\sum x_i$ and increases with liquidity.
+**If it fails:** Likely a bug in the Newton step for $D$ (Eq. (2.4)) or overflow/underflow inside `compute_d`.
+
+
+### (2) `basic_swap_less_slippage_than_xyk`
+
+**Code:**
 
 ```rust
-#[test] fn basic_swap_less_slippage_than_xyk() { ... }
+#[test]
+fn basic_swap_less_slippage_than_xyk() { /* ... */ }
 ```
 
-* For balanced liquidity and moderate $A$, StableSwap returns a **larger** output than $x\,y=k$. Matches §2.6 (constant-sum-like near parity).
+**What it checks:** Near balance and with a moderate $A$, StableSwap returns **more output** than the constant-product baseline for the same input (lower slippage).
+**Math:** §2.6 (near parity → constant-sum-like). With $A$ moderate/large, local slope $\approx 1$.
+**If it fails:** Pool too shallow or $A$ too small (curve close to $x y = k$); or fee/rounding asymmetry between the two paths.
+
+
+### (3) `fee_is_applied_on_input`
+
+**Code:**
 
 ```rust
-#[test] fn fee_is_applied_on_input() { ... }
+#[test]
+fn fee_is_applied_on_input() { /* ... */ }
 ```
 
-* With fee>0, `get_dy` decreases vs fee=0 (fee on input). Purely accounting; invariant math is fee-free.
+**What it checks:** Fee is charged **on input**: `dx_net = dx * (10000 - fee_bps) / 10000`, so output with fee is strictly **less** than without.
+**Math/Design:** Fees are not in the invariant; they adjust the state before solving $y$ (see §4 “Fees…”).
+**If it fails:** Fee applied to output instead of input, or `mul_div` overflow/zero-denom issues.
+
+
+### (4) `slippage_bps_reasonable`
+
+**Code:**
 
 ```rust
-#[test] fn slippage_bps_reasonable() { ... }
+#[test]
+fn slippage_bps_reasonable() { /* ... */ }
 ```
 
-* In deep, balanced pools with $A\approx 100$, curve-only slippage for moderate trades stays well below 1% (empirical property following from §2.6).
+**What it checks:** In a deep, balanced pool with $A\approx 100$, **curve-only** slippage for a moderate trade stays well below **1%**.
+**Math:** §2.6 (near-parity constant-sum behavior). Slippage estimated by $10^4\cdot(p-1)$ with fees disabled.
+**If it fails:** Trade size too large, pool not deep enough, or $A$ too small.
+
+
+### (5) `error_on_bad_index_and_zero_trade`
+
+**Code:**
+
+```rust
+#[test]
+fn error_on_bad_index_and_zero_trade() { /* ... */ }
+```
+
+**What it checks:** Precondition guards: `i==j` or out-of-range → `BadIndex`; `dx==0` → `ZeroTrade`.
+**Math/Design:** Domain checks; not part of the invariant—ensures API contracts.
+**If it fails:** Missing or incorrect input validation in `get_dy`.
+
+### (6) `error_on_no_liquidity`
+
+**Code:**
+
+```rust
+#[test]
+fn error_on_no_liquidity() { /* ... */ }
+```
+
+**What it checks:** If any reserve is zero, return `NoLiquidity`.
+**Math:** In (2.2), the term $D^{n+1}/(n^n P)$ is undefined if $P=0$. Must reject before solving.
+**If it fails:** Liquidity checks missing or placed after computations that assume $P>0$.
+
+### (7) `works_in_constant_product_limit_a_zero`
+
+**Code:**
+
+```rust
+#[test]
+fn works_in_constant_product_limit_a_zero() { /* ... */ }
+```
+
+**What it checks:** In the limit $A=0$ (two-coin $\mathrm{Ann}=4A=0$), the implementation still quotes using the **constant-product** path.
+**Math:** §2.3.5: as $\mathrm{Ann}\to 0$, (2.2) reduces to $D^n=n^n P$ (constant-product).
+**If it fails:** The $A=0$ branch is not taken (still tries StableSwap math), or error mapping from an optional helper is incorrect.
+
+### (8) `extreme_imbalance_still_converges`
+
+**Code:**
+
+```rust
+#[test]
+fn extreme_imbalance_still_converges() { /* ... */ }
+```
+
+**What it checks:** With **high imbalance**, both Newton solvers still converge to valid outputs.
+**Math:** §2.3.1 ensures a unique root $D$; §2.4 shows Newton from $D_0=S$ converges (decreasing, concave); §2.5 shows the $y$-equation is a convex quadratic with stable update (2.6).
+**If it fails:** Division by zero/overflow in `mul_div`, or `MAX_ITERS` too small (rare).
+
+### (9) `readme_example` (integration/usage sanity)
+
+**Code (in `tests/stable_swap_tests.rs`):**
+
+```rust
+#[test]
+fn readme_example() { /* ... */ }
+```
+
+**What it checks:** The README usage example is **runnable** and demonstrates two claims:
+
+1. With fee and $A=100$ in a deep balanced pool, swapping 100 returns >99 (very low slippage even after input-side fee).
+2. With **fees off**, StableSwap produces more output than $x y=k$ for the same input, confirming lower slippage near parity.
+   **Math:** Same as (2) and fee handling (§4).
+   **If it fails:** README example out of sync with code; fee not applied/removed as documented; or state mutated between the two quotes (note: `get_dy` is a pure quote, so reserves are unchanged).
 
 ---
 
